@@ -56,6 +56,9 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 }
 
 func (ed encodeDecoder) Encode(id int64) string {
+	if id == 0 {
+		return ""
+	}
 	id += ed.offset
 	if id < 58 {
 		return string(ed.alphabet[id])
@@ -76,6 +79,9 @@ func (ed encodeDecoder) Encode(id int64) string {
 }
 
 func (ed encodeDecoder) Decode(s string) int64 {
+	if s == "" {
+		return 0
+	}
 	b := []byte(s)
 	var id int64
 	for i := range b {

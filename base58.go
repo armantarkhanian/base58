@@ -67,6 +67,9 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 	return &ed, nil
 }
 
+// No need to check error because we got id from database, which means it always should be correct
+// and when we create EncodeDecoder interface we also check offset range, so MaxOffset is only 1000000000
+// 9 223 372 036 854 775 807 - 1 000 000 000 = 9 223 372 035 854 775 807 possible integers
 func (ed encodeDecoder) Encode(id int64) string {
 	id += ed.offset
 	if id < 58 {
@@ -87,6 +90,7 @@ func (ed encodeDecoder) Encode(id int64) string {
 	return string(b)
 }
 
+// No need to check error because decode will always return integer and for application it will just mean that client sent invalid ID
 func (ed encodeDecoder) Decode(s string) int64 {
 	b := []byte(s)
 

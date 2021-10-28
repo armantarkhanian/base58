@@ -2,13 +2,13 @@ package base58
 
 import (
 	"errors"
-	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 type EncodeDecoder interface {
-	Encode(int64) (string, bool)
-	Decode(string) (int64, bool)
+	Encode(int64) string
+	Decode(string) int64
 }
 
 type encodeDecoder struct {
@@ -20,8 +20,16 @@ type encodeDecoder struct {
 var _ EncodeDecoder = &encodeDecoder{}
 
 var (
-	ErrInvalidAlphabet = errors.New("invalid base58 alphabet")
-	ErrNegativeOffset  = errors.New("invalid negative offset")
+	ErrInvalidAlphabet     = errors.New("base58: invalid alphabet")
+	ErrInvalidOffset       = errors.New("base58: invalid offset [0; 1 000 000 000]")
+	ErrNegativeID          = errors.New("base58: negative ID")
+	ErrMaximumID           = errors.New("base58: maximum ID")
+	ErrInvalidBase58String = errors.New("base58: invalid string")
+)
+
+const (
+	MinOffset = 0
+	MaxOffset = 1000000000
 )
 
 const (
@@ -35,12 +43,12 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 		return nil, ErrInvalidAlphabet
 	}
 
-	if len(alphabet) != 58 {
+	if utf8.RuneCountInString(alphabet) != 58 {
 		return nil, ErrInvalidAlphabet
 	}
 
-	if offset < 0 {
-		return nil, ErrNegativeOffset
+	if offset < MinOffset || offset > MaxOffset {
+		return nil, ErrInvalidOffset
 	}
 
 	ed := encodeDecoder{
@@ -59,13 +67,10 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 	return &ed, nil
 }
 
-func (ed encodeDecoder) Encode(id int64) (string, bool) {
-	if id < 0 {
-		return "", false
-	}
+func (ed encodeDecoder) Encode(id int64) string {
 	id += ed.offset
 	if id < 58 {
-		return string(ed.alphabet[id]), true
+		return string(ed.alphabet[id])
 	}
 
 	b := make([]byte, 0, 11)
@@ -79,20 +84,21 @@ func (ed encodeDecoder) Encode(id int64) (string, bool) {
 		b[x], b[y] = b[y], b[x]
 	}
 
-	return string(b), true
+	return string(b)
 }
 
-func (ed encodeDecoder) Decode(s string) (int64, bool) {
-	if strings.TrimSpace(s) == "" {
-		return 0, false
-	}
+func (ed encodeDecoder) Decode(s string) int64 {
 	b := []byte(s)
+
 	var id int64
+
 	for i := range b {
 		id = id*58 + int64(ed.decodeBase58Map[b[i]])
 	}
+
 	id -= ed.offset
-	return id, true
+
+	return id
 }
 
 func isASCII(s string) bool {

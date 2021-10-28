@@ -68,8 +68,8 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 }
 
 // No need to check error because we got id from database, which means it always should be correct
-// and when we create EncodeDecoder interface we also check offset range, so MaxOffset is only 1000000000
-// 9 223 372 036 854 775 807 - 1 000 000 000 = 9 223 372 035 854 775 807 possible integers
+// and when we create EncodeDecoder interface we also check offset range, so MaxOffset is only 1000000000, so
+// we have 9 223 372 036 854 775 807 - 1 000 000 000 = 9 223 372 035 854 775 807 possible integers
 func (ed encodeDecoder) Encode(id int64) string {
 	id += ed.offset
 	if id < 58 {

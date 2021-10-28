@@ -2,12 +2,13 @@ package base58
 
 import (
 	"errors"
+	"strings"
 	"unicode"
 )
 
 type EncodeDecoder interface {
-	Encode(int64) string
-	Decode(string) int64
+	Encode(int64) (string, bool)
+	Decode(string) (int64, bool)
 }
 
 type encodeDecoder struct {
@@ -18,7 +19,10 @@ type encodeDecoder struct {
 
 var _ EncodeDecoder = &encodeDecoder{}
 
-var ErrInvalidAlphabet = errors.New("invalid base58 alphabet")
+var (
+	ErrInvalidAlphabet = errors.New("invalid base58 alphabet")
+	ErrNegativeOffset  = errors.New("invalid negative offset")
+)
 
 const (
 	Flickr  = "123456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
@@ -36,7 +40,7 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 	}
 
 	if offset < 0 {
-		offset = 0
+		return nil, ErrNegativeOffset
 	}
 
 	ed := encodeDecoder{
@@ -55,13 +59,13 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 	return &ed, nil
 }
 
-func (ed encodeDecoder) Encode(id int64) string {
-	if id == 0 {
-		return ""
+func (ed encodeDecoder) Encode(id int64) (string, bool) {
+	if id < 0 {
+		return "", false
 	}
 	id += ed.offset
 	if id < 58 {
-		return string(ed.alphabet[id])
+		return string(ed.alphabet[id]), true
 	}
 
 	b := make([]byte, 0, 11)
@@ -75,12 +79,12 @@ func (ed encodeDecoder) Encode(id int64) string {
 		b[x], b[y] = b[y], b[x]
 	}
 
-	return string(b)
+	return string(b), true
 }
 
-func (ed encodeDecoder) Decode(s string) int64 {
-	if s == "" {
-		return 0
+func (ed encodeDecoder) Decode(s string) (int64, bool) {
+	if strings.TrimSpace(s) == "" {
+		return 0, false
 	}
 	b := []byte(s)
 	var id int64
@@ -88,7 +92,7 @@ func (ed encodeDecoder) Decode(s string) int64 {
 		id = id*58 + int64(ed.decodeBase58Map[b[i]])
 	}
 	id -= ed.offset
-	return id
+	return id, true
 }
 
 func isASCII(s string) bool {

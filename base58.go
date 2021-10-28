@@ -20,15 +20,11 @@ type encodeDecoder struct {
 var _ EncodeDecoder = &encodeDecoder{}
 
 var (
-	ErrInvalidAlphabet     = errors.New("base58: invalid alphabet")
-	ErrInvalidOffset       = errors.New("base58: invalid offset [0; 1 000 000 000]")
-	ErrNegativeID          = errors.New("base58: negative ID")
-	ErrMaximumID           = errors.New("base58: maximum ID")
-	ErrInvalidBase58String = errors.New("base58: invalid string")
+	ErrInvalidAlphabet = errors.New("base58: invalid alphabet")
+	ErrInvalidOffset   = errors.New("base58: invalid offset [0; 1 000 000 000]")
 )
 
 const (
-	MinOffset = 0
 	MaxOffset = 1000000000
 )
 
@@ -47,7 +43,7 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 		return nil, ErrInvalidAlphabet
 	}
 
-	if offset < MinOffset || offset > MaxOffset {
+	if offset < 0 || offset > MaxOffset {
 		return nil, ErrInvalidOffset
 	}
 

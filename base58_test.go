@@ -27,12 +27,6 @@ func TestEncode(t *testing.T) {
 		},
 		{
 			integer:        15,
-			offset:         -1,
-			expectedBase58: "g",
-			valid:          true,
-		},
-		{
-			integer:        15,
 			offset:         1,
 			expectedBase58: "h",
 			valid:          true,
@@ -50,7 +44,7 @@ func TestEncode(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ed, err := NewEncodeDecoder(Flickr, tc.offset)
+		ed, err := New(Flickr, tc.offset)
 		require.NoError(t, err)
 		require.NotNil(t, ed)
 		base58String := ed.Encode(tc.integer)
@@ -82,12 +76,6 @@ func TestDecode(t *testing.T) {
 			valid:           true,
 		},
 		{
-			base58:          "g",
-			offset:          -1,
-			expectedInteger: 15,
-			valid:           true,
-		},
-		{
 			base58:          "h",
 			offset:          1,
 			expectedInteger: 15,
@@ -102,7 +90,7 @@ func TestDecode(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		ed, err := NewEncodeDecoder(Flickr, tc.offset)
+		ed, err := New(Flickr, tc.offset)
 		require.NoError(t, err)
 		require.NotNil(t, ed)
 		integer := ed.Decode(tc.base58)
@@ -143,7 +131,7 @@ func TestNewEncodeDecoder(t *testing.T) {
 		{
 			alphabet: Ripple,
 			offset:   -1,
-			valid:    true,
+			valid:    false,
 		},
 		{
 			alphabet: "abcdefg",
@@ -152,27 +140,24 @@ func TestNewEncodeDecoder(t *testing.T) {
 		},
 	}
 	for _, tc := range tt {
-		ed, err := NewEncodeDecoder(tc.alphabet, tc.offset)
+		ed, err := New(tc.alphabet, tc.offset)
 		if !tc.valid {
-			require.Equal(t, ErrInvalidAlphabet, err)
+			require.Error(t, err)
 			require.Nil(t, ed)
 			continue
 		}
 		require.NoError(t, err)
 		require.NotNil(t, ed)
 
-		edStruct, ok := ed.(*encodeDecoder)
-		require.True(t, ok)
-
 		if tc.offset <= 0 {
-			require.Equal(t, int64(0), edStruct.offset)
+			require.Equal(t, int64(0), ed.offset)
 		} else {
-			require.Equal(t, tc.offset, edStruct.offset)
+			require.Equal(t, tc.offset, ed.offset)
 		}
 
-		require.Equal(t, tc.alphabet, edStruct.alphabet)
-		require.NotNil(t, edStruct.decodeBase58Map)
-		require.Len(t, edStruct.decodeBase58Map, 256)
+		require.Equal(t, tc.alphabet, ed.alphabet)
+		require.NotNil(t, ed.decodeBase58Map)
+		require.Len(t, ed.decodeBase58Map, 256)
 	}
 }
 

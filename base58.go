@@ -6,18 +6,11 @@ import (
 	"unicode/utf8"
 )
 
-type EncodeDecoder interface {
-	Encode(int64) string
-	Decode(string) int64
-}
-
-type encodeDecoder struct {
+type EncodeDecoder struct {
 	offset          int64
 	alphabet        string
 	decodeBase58Map [256]byte
 }
-
-var _ EncodeDecoder = &encodeDecoder{}
 
 var (
 	ErrInvalidAlphabet = errors.New("base58: invalid alphabet")
@@ -34,7 +27,7 @@ const (
 	Bitcoin = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 )
 
-func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
+func New(alphabet string, offset int64) (*EncodeDecoder, error) {
 	if !isASCII(alphabet) {
 		return nil, ErrInvalidAlphabet
 	}
@@ -47,7 +40,7 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 		return nil, ErrInvalidOffset
 	}
 
-	ed := encodeDecoder{
+	ed := EncodeDecoder{
 		alphabet: alphabet,
 		offset:   offset,
 	}
@@ -66,7 +59,7 @@ func NewEncodeDecoder(alphabet string, offset int64) (EncodeDecoder, error) {
 // No need to check error because we got id from database, which means it always should be correct
 // and when we create EncodeDecoder interface we also check offset range, so MaxOffset is only 1000000000, so
 // we have 9 223 372 036 854 775 807 - 1 000 000 000 = 9 223 372 035 854 775 807 possible integers
-func (ed encodeDecoder) Encode(id int64) string {
+func (ed EncodeDecoder) Encode(id int64) string {
 	id += ed.offset
 	if id < 58 {
 		return string(ed.alphabet[id])
@@ -87,7 +80,7 @@ func (ed encodeDecoder) Encode(id int64) string {
 }
 
 // No need to check error because decode will always return integer and for application it will just mean that client sent invalid ID
-func (ed encodeDecoder) Decode(s string) int64 {
+func (ed EncodeDecoder) Decode(s string) int64 {
 	b := []byte(s)
 
 	var id int64

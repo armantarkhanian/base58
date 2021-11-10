@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	ed, err := base58.NewEncodeDecoder(base58.Flickr, 100000000000000)
+	ed, err := base58.New(base58.Flickr, 100000000000000)
 	if err != nil {
 		panic(err)
 	}
